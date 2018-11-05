@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var User = require('../models/Users');
 
 router.get('/login', getLoginForm);
 router.get('/register', getRegisterationForm);
@@ -38,8 +39,6 @@ function getRegisterationForm(req, res, next) {
  */
 function login(req, res, next) {
 
-  let errorMessages;
-
   // Check Validation
   req.checkBody('username', 'User name is required').notEmpty();
   req.checkBody('password', 'Password is required').notEmpty();
@@ -48,6 +47,7 @@ function login(req, res, next) {
   validateForm({
     req: req,
     res: res,
+    action: "login",
     title: "Login Form",
     view: "account/register"
   });
@@ -77,6 +77,7 @@ function register(req, res, next) {
   validateForm({
     req: req,
     res: res,
+    action: "register",
     title: "Registration Form",
     view: "account/register"
   });
@@ -99,17 +100,36 @@ function validateForm(data) {
   });
 
   // Send the reply
-  if (errorMessages) {
+  if (1 == 0 && errorMessages) {
     data.res.render(data.view || "/", {
       title: data.title || "",
       errors: errorMessages
     });
   } else {
-    data.res.redirect('/');
+    processAction(data);
   }
 
   // Return undefined if there are no errors
   return errors ? errorMessages : undefined;
+
+}
+
+function processAction(data) {
+
+  switch (data.action) {
+    case "login":
+      console.log('login');
+      break;
+    case "register":
+      let user = new User(data.req.body);
+      User.createUser(user)
+        .then(function (err, userRecord) {
+          if (!err) {
+            data.res.redirect('/');
+          }
+        });
+      break;
+  }
 
 }
 
